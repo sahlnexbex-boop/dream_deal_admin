@@ -10,7 +10,6 @@ import {
   Key,
   History,
   BookmarkPlus,
-  Wallet,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
