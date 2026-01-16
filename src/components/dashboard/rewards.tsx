@@ -1,12 +1,7 @@
 import {
   Check,
   Crown,
-  Gift,
-  Headphones,
-  Laptop,
-  Smartphone,
   Users,
-  Watch,
 } from "lucide-react";
 
 export default function Rewards() {
