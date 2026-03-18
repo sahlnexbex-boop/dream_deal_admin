@@ -113,12 +113,6 @@ export default function Topbar({
 
   const queryClient = useQueryClient();
 
-  const staticEncryptEmail = EncryptData("abhijithdas76@gmail.com");
-  const staticEncryptPassword = EncryptData("dd123@#");
-
-  console.log("abhijith", staticEncryptEmail);
-  console.log("dd123", staticEncryptPassword);
-
   const handleLogout = async () => {
     setIsMoreOpen(false);
     try {
