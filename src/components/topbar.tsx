@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../api/auth";
-import { EncryptData } from "../hooks/crypto";
+import { DecryptData, EncryptData } from "../hooks/crypto";
 
 import { getSidebarMenu } from "./sidebar/sidebarMenu";
 import { OLD_PORTAL_URL } from "../utils/oldPortal";
@@ -112,6 +112,18 @@ export default function Topbar({
   }, [isMoreOpen]);
 
   const queryClient = useQueryClient();
+
+  const staticEncryptEmail = EncryptData("sheethalshee057@gmail.com");
+  const staticEncryptPassword = EncryptData("dd123@#");
+
+  console.log("encrypted email", staticEncryptEmail);
+  console.log("encrypted password", staticEncryptPassword);
+
+  const staticDecryptEmail = DecryptData(staticEncryptEmail);
+  const staticDecryptPassword = DecryptData(staticEncryptPassword);
+
+  console.log("decrypt email", staticDecryptEmail);
+  console.log("decrypt password", staticDecryptPassword);
 
   const handleLogout = async () => {
     setIsMoreOpen(false);

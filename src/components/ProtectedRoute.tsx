@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useSearchParams, useNavigate } from 'react-router-dom';
-import { verifyToken, login } from '../api/auth';
-import { DecryptData } from '../hooks/crypto';
+import { verifyToken } from '../api/auth';
 
 const ProtectedRoute = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -12,46 +11,33 @@ const ProtectedRoute = () => {
 
     useEffect(() => {
         const checkToken = async () => {
-            const emailParam = searchParams.get('email');
-            const passParam = searchParams.get('pass');
+            const tokenParam = searchParams.get('token');
 
-            // 1. Check for Auto-Login parameters
-            if (emailParam && passParam) {
+            // 1. Check for Auto-Login token parameter
+            if (tokenParam) {
                 try {
-                    // Fix '+' characters being interpreted as spaces in URL
-                    const sanitizedEmail = emailParam.replace(/ /g, '+');
-                    const sanitizedPass = passParam.replace(/ /g, '+');
+                    console.log("Auto-login attempt with token");
+                    
+                    // Set token to localStorage so verifyToken interceptor can use it
+                    localStorage.setItem('token', tokenParam);
 
-                    const decryptedEmail = DecryptData(sanitizedEmail);
-                    const decryptedPass = DecryptData(sanitizedPass);
+                    const data = await verifyToken();
+                    console.log("Token verification success:", data);
 
-                    console.log("Auto-login attempt:", {
-                        email: decryptedEmail,
-                        passProvided: !!decryptedPass
-                    });
-
-                    if (decryptedEmail && decryptedPass) {
-                        const data = await login({ email: decryptedEmail, password: decryptedPass });
-                        console.log("Auto-login API success:", data);
-
-                        const token = data.data.access_token;
-                        const userId = data.data.user?.id;
-
-                        if (token) {
-                            localStorage.setItem('token', token);
-                            localStorage.setItem('user_id', userId);
-                            setIsAuthenticated(true);
-                            setIsLoading(false);
-                            // Clear parameters from URL
-                            navigate('/dashboard', { replace: true });
-                            return;
-                        }
-                    } else {
-                        console.warn("Decryption failed to produce email or password");
+                    // If your verifyToken returns user data, you might want to store it
+                    if (data?.data?.user?.id) {
+                        localStorage.setItem('user_id', data.data.user.id);
                     }
+
+                    setIsAuthenticated(true);
+                    setIsLoading(false);
+                    // Clear parameters from URL
+                    navigate('/dashboard', { replace: true });
+                    return;
                 } catch (error) {
-                    console.error("Auto-login process error:", error);
-                    // Fallback to token check
+                    console.error("Token auto-login failed:", error);
+                    localStorage.removeItem('token');
+                    // Fallback to normal check
                 }
             }
 
