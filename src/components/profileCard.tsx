@@ -1,4 +1,4 @@
-export default function ProfileCard() {
+export default function ProfileCard({ data }: { data: any }) {
   return (
     <div className="bg-white rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-4">
@@ -7,14 +7,14 @@ export default function ProfileCard() {
           className="rounded-full"
         />
         <div>
-          <h2 className="font-bold text-lg">William John</h2>
+          <h2 className="font-bold text-lg">{data?.name}</h2>
           <p className="text-sm text-gray-500">Promoting Partner</p>
         </div>
       </div>
 
       <div className="text-right">
         <p className="text-gray-500 text-sm">Balance</p>
-        <h2 className="text-2xl font-bold text-green-600">₹3,885.50</h2>
+        <h2 className="text-2xl font-bold text-green-600">₹{data.balance}</h2>
         <button className="mt-2 px-4 py-2 bg-lime-400 rounded-full">
           Withdraw
         </button>

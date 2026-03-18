@@ -1,32 +1,13 @@
-// import React from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  LayoutDashboard,
-  User,
-  Users,
-  Layers,
-  CreditCard,
-  Key,
-  History,
-  BookmarkPlus,
+  ChevronDown,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
-
-// defining menu items here to match the image icons exactly
-const sidebarMenu = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Sub Promoters", path: "/sub-promoters", icon: User },
-  { name: "My Customers", path: "/my-customers", icon: Users },
-  { name: "Affiliate Marketing", path: "/affiliate-level", icon: Layers },
-  { name: "Payments", path: "/payments", icon: CreditCard },
-  { name: "Repayment Pins", path: "/repayment-pins", icon: Key },
-  { name: "Repayment History", path: "/pin-history", icon: History },
-  { name: "My Pin Requests", path: "/pin-requests", icon: BookmarkPlus },
-  // { name: "Withdrawal Request", path: "/withdrawal", icon: Wallet },
-  //   { name: "Customer Report", path: "/customer-report", icon: FileBarChart },
-  //   { name: "Income Report", path: "/income-report", icon: TrendingUp },
-];
+import { NavLink, useLocation } from "react-router-dom";
+import { getSidebarMenu } from "./sidebarMenu";
+import { DecryptData, EncryptData } from "../../hooks/crypto";
+import { useScheme } from "../../context/SchemeContext";
 
 export default function DesktopSidebar({
   collapsed,
@@ -35,6 +16,35 @@ export default function DesktopSidebar({
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const location = useLocation();
+  const { selectedSchemeId } = useScheme();
+  const sidebarMenu = getSidebarMenu(selectedSchemeId?.toString() || "");
+
+  const encryptedData = EncryptData("dd123@#");
+  const decryptedData = DecryptData(encryptedData);
+
+  console.log("encrypted data", encryptedData);
+  console.log("decrypted data", decryptedData);
+
+  // Auto-open accordion based on current path
+  useEffect(() => {
+    if (!collapsed) {
+      const currentPath = location.pathname;
+      const activeParent = sidebarMenu.find(item =>
+        item.children?.some(child => currentPath.startsWith(child.path))
+      );
+      if (activeParent) {
+        setOpenAccordion(activeParent.path);
+      }
+    }
+  }, [location.pathname, collapsed, sidebarMenu]);
+
+  const handleAccordionToggle = (path: string) => {
+    if (collapsed) return;
+    setOpenAccordion(openAccordion === path ? null : path);
+  };
+
   return (
     <aside
       className={`hidden md:flex fixed top-0 left-0 h-screen bg-white 
@@ -54,7 +64,7 @@ export default function DesktopSidebar({
               </div>
             </div>
           ) : (
-           <img src="/Images/logo_only.png" alt="logo" className="max-w-6" />
+            <img src="/Images/logo_only.png" alt="logo" className="max-w-6" />
           )}
 
           <button
@@ -66,38 +76,91 @@ export default function DesktopSidebar({
         </div>
 
         {/* MENU LIST */}
-        <nav className="flex-1 overflow-y-auto px-4 space-y-2 custom-scrollbar">
-          {sidebarMenu.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3.5 rounded-lg transition-all duration-200 group
-                ${
-                  isActive
-                    ? "bg-[#edfacc] text-gray-800 font-semibold" // Active: Lime light bg, dark text
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium" // Inactive
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon
-                    size={22}
-                    strokeWidth={1.5}
-                    className={`${
-                      isActive
-                        ? "text-gray-800"
-                        : "text-lime-600 group-hover:text-gray-700"
-                    }`}
-                  />
-                  {!collapsed && (
-                    <span className="text-sm tracking-wide">{item.name}</span>
+        <nav className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar">
+          {sidebarMenu.map((item) => {
+            const hasChildren = item.children && item.children.length > 0;
+            const isAccordionOpen = openAccordion === item.path;
+
+            return (
+              <div key={item.path} className="relative">
+                {/* Parent Menu Item */}
+                <NavLink
+                  to={item.path}
+                  onClick={(e) => {
+                    if (hasChildren && !collapsed) {
+                      e.preventDefault();
+                      handleAccordionToggle(item.path);
+                    }
+                  }}
+                  className={({ isActive }) =>
+                    `flex items-center gap-4 px-4 py-3.5 rounded-lg transition-all duration-200 group relative
+                    ${isActive
+                      ? "bg-[#edfacc] text-gray-800 font-semibold"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon
+                        size={22}
+                        strokeWidth={1.5}
+                        className={`${isActive
+                          ? "text-gray-800"
+                          : "text-lime-600 group-hover:text-gray-700"
+                          }`}
+                      />
+                      {!collapsed && (
+                        <>
+                          <span className="text-sm tracking-wide flex-1">
+                            {item.name}
+                          </span>
+                          {hasChildren && (
+                            <ChevronDown
+                              size={16}
+                              className={`text-gray-400 transition-transform duration-300 ${isAccordionOpen ? "rotate-180" : ""
+                                }`}
+                            />
+                          )}
+                        </>
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </NavLink>
-          ))}
+                </NavLink>
+
+                {/* Children Accordion - Only show when not collapsed */}
+                {hasChildren && !collapsed && (
+                  <div
+                    className={`accordion-content overflow-hidden ${isAccordionOpen
+                      ? "max-h-96 opacity-100 translate-y-0"
+                      : "max-h-0 opacity-0 -translate-y-2"
+                      }`}
+                  >
+                    <div className="pl-8 pr-4 py-1 space-y-1">
+                      {item.children?.map((child, childIdx) => (
+                        <NavLink
+                          key={child.path}
+                          to={child.path}
+                          className={({ isActive }) =>
+                            `flex items-center px-4 py-2.5 rounded-lg text-sm transition-all duration-200 ${isAccordionOpen ? "accordion-item" : ""
+                            } ${isActive
+                              ? "bg-[#edfacc] text-gray-800 font-semibold"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
+                            }`
+                          }
+                          style={{
+                            animationDelay: isAccordionOpen ? `${childIdx * 50}ms` : "0ms",
+                          }}
+                        >
+                          <span className="tracking-wide">{child.name}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* LOGOUT */}
@@ -107,7 +170,7 @@ export default function DesktopSidebar({
             {!collapsed && <span className="font-medium text-sm">Logout</span>}
           </button>
         </div> */}
-      </div>
-    </aside>
+      </div >
+    </aside >
   );
 }

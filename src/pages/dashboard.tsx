@@ -4,10 +4,11 @@ import ProfileCard from "../components/dashboard/profileCard";
 import HighlightBanner from "../components/dashboard/highlightBanner";
 import TopEarnersList from "../components/dashboard/topEarnersList";
 import PaymentChart from "../components/dashboard/paymentChart";
-import SmartPurchasePlan from "../components/dashboard/smartPurchase";
 import Rewards from "../components/dashboard/rewards";
 import Levels from "../components/dashboard/levels";
 import Overview from "../components/dashboard/overview";
+import AlertBanners from "../components/dashboard/alertBanners";
+import SmartPurchasePlan from "../components/dashboard/smartPurchase";
 
 
 export default function Dashboard() {
@@ -16,6 +17,8 @@ export default function Dashboard() {
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-7 gap-6">
         {/* Left Column (Spans 2 on desktop) */}
         <div className="xl:col-span-5 space-y-6">
+
+          <AlertBanners />
           <ProfileCard />
           <StatsRow />
           <HighlightBanner />

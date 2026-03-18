@@ -4,12 +4,49 @@ import DesktopSidebar from "../components/sidebar/desktopSidebar";
 import MobileSidebar from "../components/sidebar/mobileSidebar";
 import Topbar from "../components/topbar";
 
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getProfileSummary, getCustomerStatistics, getOverview,
+  getLevels, getRewards, getHighestEarnersMonth, getHighestEarnersWeek, getNotifications,
+  getAssignedSchemes, getCurrentSchemeDetails
+} from "../api/dashboard";
+import {
+  profileSummaryKey, customerStatisticsKey, overviewKey,
+  levelsKey, rewardsKey, highestEarnersMonthKey, highestEarnersWeekKey, notificationsKey,
+  assignedSchemesKey, currentSchemeDetailsKey
+} from "../api/queryKeys";
+
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(
     window.innerWidth >= 768
   );
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Prefetch Dashboard Data on mount
+    const prefetch = async () => {
+      const storedSchemeId = localStorage.getItem("scheme_id");
+      const initialSchemeId = storedSchemeId ? Number(storedSchemeId) : null;
+
+      const promises = [
+        queryClient.prefetchQuery({ queryKey: profileSummaryKey(), queryFn: getProfileSummary }),
+        queryClient.prefetchQuery({ queryKey: customerStatisticsKey(initialSchemeId), queryFn: () => getCustomerStatistics(initialSchemeId) }),
+        queryClient.prefetchQuery({ queryKey: overviewKey(initialSchemeId), queryFn: () => getOverview(initialSchemeId) }),
+        queryClient.prefetchQuery({ queryKey: levelsKey(), queryFn: getLevels }),
+        queryClient.prefetchQuery({ queryKey: rewardsKey(), queryFn: getRewards }),
+        queryClient.prefetchQuery({ queryKey: highestEarnersMonthKey(), queryFn: getHighestEarnersMonth }),
+        queryClient.prefetchQuery({ queryKey: highestEarnersWeekKey(), queryFn: getHighestEarnersWeek }),
+        queryClient.prefetchQuery({ queryKey: notificationsKey(), queryFn: getNotifications }),
+        queryClient.prefetchQuery({ queryKey: assignedSchemesKey(), queryFn: getAssignedSchemes }),
+        queryClient.prefetchQuery({ queryKey: currentSchemeDetailsKey(initialSchemeId), queryFn: () => getCurrentSchemeDetails(initialSchemeId) })
+      ];
+      await Promise.all(promises);
+    };
+    prefetch();
+  }, [queryClient]);
 
   useEffect(() => {
     const handleResize = () => {
