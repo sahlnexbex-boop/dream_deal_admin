@@ -10,38 +10,48 @@ const ProtectedRoute = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Skip check if already authenticated (prevents double call after redirect)
+        if (isAuthenticated && !searchParams.get('token')) {
+            setIsLoading(false);
+            return;
+        }
+
         const checkToken = async () => {
             const tokenParam = searchParams.get('token');
 
-            // 1. Check for Auto-Login token parameter
+            // 1. Handle Token from URL (Auto-Login)
             if (tokenParam) {
                 try {
-                    console.log("Auto-login attempt with token");
+                    console.log("Token verification attempt from URL...");
                     
-                    // Set token to localStorage so verifyToken interceptor can use it
+                    // Set token to localStorage so axios can use it in headers
                     localStorage.setItem('token', tokenParam);
 
                     const data = await verifyToken();
-                    console.log("Token verification success:", data);
+                    console.log("Verify token success:", data);
 
-                    // If your verifyToken returns user data, you might want to store it
+                    // Store user ID if present in response
                     if (data?.data?.user?.id) {
                         localStorage.setItem('user_id', data.data.user.id);
                     }
 
                     setIsAuthenticated(true);
                     setIsLoading(false);
-                    // Clear parameters from URL
+
+                    // Redirect to dashboard without the token in the URL
                     navigate('/dashboard', { replace: true });
                     return;
                 } catch (error) {
-                    console.error("Token auto-login failed:", error);
+                    console.error("Verify token error:", error);
                     localStorage.removeItem('token');
-                    // Fallback to normal check
+                    localStorage.removeItem('user_id');
+                    setIsAuthenticated(false);
+                    setIsLoading(false);
+                    return;
                 }
             }
 
-            // 2. Standard Token Check
+            // 2. Standard Token Check (from localStorage)
             const token = localStorage.getItem('token');
 
             if (!token) {
@@ -51,14 +61,13 @@ const ProtectedRoute = () => {
             }
 
             try {
-                // Verify token with backend
+                // Verify existing token with backend
                 await verifyToken();
-                // If API call succeeds (200 OK), token is valid
                 setIsAuthenticated(true);
             } catch (error) {
-                // If API call fails (401/403), token is invalid
-                console.error("Token verification failed:", error);
+                console.error("Stored token verification failed:", error);
                 localStorage.removeItem('token');
+                localStorage.removeItem('user_id');
                 setIsAuthenticated(false);
             } finally {
                 setIsLoading(false);
@@ -66,7 +75,7 @@ const ProtectedRoute = () => {
         };
 
         checkToken();
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, isAuthenticated]);
 
     if (isLoading) {
         // You can return a loading spinner here
